@@ -1,7 +1,34 @@
 import sys
+import numpy as np
 
-def get_guess(data, target):
-    return data[0]
+def get_guess(data):
+    minguess = (None, 100000)
+
+    for g in data:
+        alpha = find_alpha(g, data)
+        #print(alpha)
+        if (alpha < minguess[1]):
+            minguess = (g, alpha)
+
+    return minguess[0]
+
+
+def find_alpha(g, data):
+    total = 0
+    patterns = {}
+    for t in data:
+        if (t != g):
+            pattern = get_pattern(g, t)
+            if (patterns.get(tuple(pattern)) == None):
+                W = filter_data(data, pattern, g)
+                #print(W, t, g)
+                patterns[tuple(pattern)] = np.log(len(W))
+                total += np.log(len(W))
+            else:
+                total += patterns.get(tuple(pattern))
+
+    return total
+
 
 def get_pattern(guess, target):
     pattern = []
@@ -59,15 +86,17 @@ def check_word(word, pattern_dict, guess, correct):
 
 def solve_wordle(data, target):
     while(True):
-        guess = get_guess(data, target)
+        guess = get_guess(data)
 
         pattern = get_pattern(guess, target)
 
-        if (guess == target): return
+        if (guess == target): 
+            print(guess)
+            return
 
         data = filter_data(data, pattern, guess)
 
-        print(data, guess, pattern, target)
+        print(guess, "".join(pattern))
 
 
 
