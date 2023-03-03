@@ -1,23 +1,22 @@
 import sys
 import numpy as np
 import time
+from termcolor import colored
 
 def get_guess(data):
-    curr = time.time()
+    curr = time.perf_counter()
     minguess = (None, 100000)
 
     # O(|W| * O(find_alpha))
     count = 0
     for g in data:
-        count += 1
         alpha = find_alpha(g, data)
         #print(alpha)
         if (alpha < minguess[1]):
             minguess = (g, alpha)
 
-    print(time.time() - curr)
-    print(count)
 
+    print(time.perf_counter() - curr)
     return minguess[0]
 
 
@@ -25,21 +24,17 @@ def find_alpha(g, data):
     total = 0
     patterns = {}
 
-    #O(t) + 243*O(filter_data)
-    #count = 0
     for t in data:
         if (t != g):
-            pattern = get_pattern(g, t)
-            if (patterns.get(tuple(pattern)) == None):
-                #count += 1
-                W = filter_data(data, pattern, g)
-                #print(W, t, g)
-                patterns[tuple(pattern)] = np.log(len(W))
-                total += np.log(len(W))
-            else:
-                total += patterns.get(tuple(pattern))
+            pattern = tuple(get_pattern(g, t))
 
-    #print(count)
+            if (patterns.get(pattern) == None):
+                W = filter_data(data, pattern, g)
+                patterns[pattern] = np.log(len(W))
+                total += np.log(len(W))
+
+            else:
+                total += patterns.get(pattern)
 
     return total
 
@@ -51,8 +46,6 @@ def get_pattern(guess, target):
         if (ch == target[i]):
             pattern.append('G')
             correct += ch
-        elif (ch not in target):
-            pattern.append('B')
         else:
             pattern.append('?')
 
@@ -75,7 +68,6 @@ def filter_data(data, pattern, guess):
         pattern_dict[val].append(i)
 
     compatible = []
-    #print(data)
     for word in data:
         word = check_word(word, pattern_dict, guess, correct)
 
@@ -86,7 +78,6 @@ def filter_data(data, pattern, guess):
 
 
 def check_word(word, pattern_dict, guess, correct):
-    #print(pattern_dict, guess, word)
     for i in pattern_dict['B']:
         if ((guess[i] not in correct) and (guess[i] in word)) or ((word.count(guess[i]) > correct.count(guess[i])) and (guess.count(guess[i]) > correct.count(guess[i]))):
             return None
@@ -112,20 +103,41 @@ def solve_wordle(data, target):
 
         data = filter_data(data, pattern, guess)
 
-        print(guess, "".join(pattern))
+        print("".join(get_colors(pattern, guess)))
 
+
+def get_colors(pattern, guess):
+    colored_pattern = []
+    for i, letter in enumerate(pattern):
+        if letter == 'G':
+            colored_pattern.append(colored(guess[i], 'blue', on_color='on_green'))
+        elif letter == 'Y':
+            colored_pattern.append(colored(guess[i], 'blue', on_color='on_yellow'))
+        else:
+            colored_pattern.append(colored(guess[i], 'white'))
+
+    return colored_pattern
 
 
 if __name__ == '__main__':
     if(len(sys.argv) != 3):
         print("Incorrect number of arguments. Input: python wordlesolver.py [word file] [target word]")
 
-    filename, target = sys.argv[1], sys.argv[2]
+    else:
+        filename, target = sys.argv[1], sys.argv[2]
 
-    #define text file to open
-    my_file = open(filename, 'r')
+        #define text file to open
+        try:
+            my_file = open(filename, 'r')
+        except FileNotFoundError:
+            print("No file found with name: ", filename)
+            print("Ensure the correct arguments. Input: python wordlesolver.py [word file] [target word]")
 
-    #read text file into list
-    data = my_file.read().split('\n')
+        #read text file into list
+        data = my_file.read().split('\n')
 
-    solve_wordle(data, target)
+        if (target in data):
+            solve_wordle(data, target)
+
+        else:
+            print(f"The word {target} was not found in the file {filename}. Retry with a correct word from the list.")
