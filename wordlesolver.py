@@ -1,14 +1,22 @@
 import sys
 import numpy as np
+import time
 
 def get_guess(data):
+    curr = time.time()
     minguess = (None, 100000)
 
+    # O(|W| * O(find_alpha))
+    count = 0
     for g in data:
+        count += 1
         alpha = find_alpha(g, data)
         #print(alpha)
         if (alpha < minguess[1]):
             minguess = (g, alpha)
+
+    print(time.time() - curr)
+    print(count)
 
     return minguess[0]
 
@@ -16,16 +24,22 @@ def get_guess(data):
 def find_alpha(g, data):
     total = 0
     patterns = {}
+
+    #O(t) + 243*O(filter_data)
+    #count = 0
     for t in data:
         if (t != g):
             pattern = get_pattern(g, t)
             if (patterns.get(tuple(pattern)) == None):
+                #count += 1
                 W = filter_data(data, pattern, g)
                 #print(W, t, g)
                 patterns[tuple(pattern)] = np.log(len(W))
                 total += np.log(len(W))
             else:
                 total += patterns.get(tuple(pattern))
+
+    #print(count)
 
     return total
 
@@ -61,6 +75,7 @@ def filter_data(data, pattern, guess):
         pattern_dict[val].append(i)
 
     compatible = []
+    #print(data)
     for word in data:
         word = check_word(word, pattern_dict, guess, correct)
 
@@ -71,6 +86,7 @@ def filter_data(data, pattern, guess):
 
 
 def check_word(word, pattern_dict, guess, correct):
+    #print(pattern_dict, guess, word)
     for i in pattern_dict['B']:
         if ((guess[i] not in correct) and (guess[i] in word)) or ((word.count(guess[i]) > correct.count(guess[i])) and (guess.count(guess[i]) > correct.count(guess[i]))):
             return None
