@@ -5,36 +5,40 @@ from termcolor import colored
 
 def get_guess(data):
     curr = time.perf_counter()
-    minguess = (None, 100000)
+    minguess = (None, float("inf"))
+    timer = 0
 
-    # O(|W| * O(find_alpha))
-    count = 0
     for g in data:
         alpha = find_alpha(g, data)
-        #print(alpha)
+
         if (alpha < minguess[1]):
             minguess = (g, alpha)
 
-
-    print(time.perf_counter() - curr)
-    return minguess[0]
+    print(time.perf_counter() - curr, timer)
+    return minguess
 
 
 def find_alpha(g, data):
     total = 0
     patterns = {}
 
+    curr = time.perf_counter()
     for t in data:
         if (t != g):
             pattern = tuple(get_pattern(g, t))
-
-            if (patterns.get(pattern) == None):
-                W = filter_data(data, pattern, g)
-                patterns[pattern] = np.log(len(W))
-                total += np.log(len(W))
-
+            if (patterns.get(pattern) != None):
+                patterns[pattern] += 1 
             else:
-                total += patterns.get(pattern)
+                patterns[pattern] = 1
+    
+    #print("1", time.perf_counter() - curr)
+    curr = time.perf_counter()
+
+    for p in patterns.keys():
+        W = filter_data(data, p, g)
+        total += patterns[p] * np.log(len(W))
+
+    #print("2", time.perf_counter() - curr)
 
     return total
 
@@ -78,14 +82,14 @@ def filter_data(data, pattern, guess):
 
 
 def check_word(word, pattern_dict, guess, correct):
-    for i in pattern_dict['B']:
-        if ((guess[i] not in correct) and (guess[i] in word)) or ((word.count(guess[i]) > correct.count(guess[i])) and (guess.count(guess[i]) > correct.count(guess[i]))):
-            return None
     for i in pattern_dict['G']:
         if guess[i] != word[i]:
             return None
     for i in pattern_dict['Y']:
         if ((correct.count(guess[i]) < word.count(guess[i])) and (guess.count(guess[i]) > correct.count(guess[i]))) or (correct.count(guess[i]) > word.count(guess[i])):
+            return None
+    for i in pattern_dict['B']:
+        if ((guess[i] not in correct) and (guess[i] in word)) or ((word.count(guess[i]) > correct.count(guess[i])) and (guess.count(guess[i]) > correct.count(guess[i]))):
             return None
 
     return word
@@ -93,17 +97,17 @@ def check_word(word, pattern_dict, guess, correct):
 
 def solve_wordle(data, target):
     while(True):
-        guess = get_guess(data)
+        guess, alpha = get_guess(data)
 
         pattern = get_pattern(guess, target)
 
         if (guess == target): 
-            print(guess)
+            print("".join(get_colors(pattern, guess)), alpha)
             return
 
         data = filter_data(data, pattern, guess)
 
-        print("".join(get_colors(pattern, guess)))
+        print("".join(get_colors(pattern, guess)), alpha)
 
 
 def get_colors(pattern, guess):
