@@ -4,7 +4,6 @@ from termcolor import colored
 
 def get_guess(data):
     minguess = (None, float("inf"))
-    timer = 0
 
     for g in data:
         alpha = find_alpha(g, data)
