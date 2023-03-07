@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-import time
 from termcolor import colored
 
 def get_guess(data):
