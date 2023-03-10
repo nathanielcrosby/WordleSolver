@@ -1,3 +1,5 @@
+Wordle Solver by Nathaniel Crosby and David Dang
+
 Running the Program:
 
 python wordlesolver.py [word_file] [target_word] [--compute-first-guess] [-c]
