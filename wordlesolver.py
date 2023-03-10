@@ -2,7 +2,10 @@ import sys
 import numpy as np
 from termcolor import colored
 
+
 def get_guess(data):
+    """ Calculates alpha for each possible guess and returns the (guess, alpha) tuple with the lowest alpha. """
+
     minguess = (None, float("inf"))
 
     for g in data:
@@ -15,6 +18,8 @@ def get_guess(data):
 
 
 def find_alpha(g, data):
+    """ For a potential guess g, calculate the number of target words that generate each pattern, then calculate alpha for the guess overall. """
+    
     patterns = {}
 
     for t in data:
@@ -33,6 +38,8 @@ def find_alpha(g, data):
 
 
 def get_pattern(guess, target):
+    """ Return a list of 'G', 'Y', and 'B' representing the wordle pattern for a guess and target. """
+
     pattern = []
     correct = ''
     for i, ch in enumerate(guess):
@@ -53,6 +60,8 @@ def get_pattern(guess, target):
     return pattern
 
 def filter_data(data, pattern, guess):
+    """ Return a list of words that filters out all words incompatible with a given guess and pattern. """
+
     correct = ''
     pattern_dict = {'B':[], 'G':[], 'Y':[]}
     for i, val in enumerate(pattern):
@@ -71,6 +80,8 @@ def filter_data(data, pattern, guess):
 
 
 def check_word(word, pattern_dict, guess, correct):
+    """ Helper function for filter_data that checks whether a word is compatible with the guess and pattern. """
+
     for i in pattern_dict['G']:
         if guess[i] != word[i]:
             return None
@@ -92,10 +103,15 @@ def check_word(word, pattern_dict, guess, correct):
     return word
 
 
-def solve_wordle(data, target):
-    guess, alpha = 'tares', 79277.23353563494
-    pattern = get_pattern(guess, target)
+def solve_wordle(data, target, compute_first):
+    """ Main function that solves the wordle query given a set of words and a target. """
 
+    if (not compute_first):
+        guess, alpha = 'tares', 79277.23353563494
+    else:
+        guess, alpha = get_guess(data)
+
+    pattern = get_pattern(guess, target)
     print("".join(get_colors(pattern, guess)), alpha)
     
     while(guess != target):
@@ -109,6 +125,8 @@ def solve_wordle(data, target):
 
 
 def get_colors(pattern, guess):
+    """ Helper function to color the outputted text to show the pattern over the guessed word. """
+
     colored_pattern = []
     for i, letter in enumerate(pattern):
         if letter == 'G':
@@ -122,8 +140,8 @@ def get_colors(pattern, guess):
 
 
 if __name__ == '__main__':
-    if(len(sys.argv) != 3):
-        print("Incorrect number of arguments. Input: python wordlesolver.py [word file] [target word]")
+    if(len(sys.argv) < 3):
+        print("Incorrect number of arguments. Input: python wordlesolver.py word_file target_word [--compute-first-guess] [-c]")
 
     else:
         filename, target = sys.argv[1], sys.argv[2]
@@ -133,13 +151,22 @@ if __name__ == '__main__':
             my_file = open(filename, 'r')
         except FileNotFoundError:
             print("No file found with name: ", filename)
-            print("Ensure the correct arguments. Input: python wordlesolver.py [word file] [target word]")
+            print("Ensure the correct arguments. Input: python wordlesolver.py word_file target_word [--compute-first-guess] [-c]")
 
         #read text file into list
         data = my_file.read().split('\n')
 
+        compute_first = False
+        if (len(sys.argv) > 3) and ((sys.argv[3] == '--compute-first-guess') or (sys.argv[3] == '-c')): 
+            compute_first = True
+        elif (len(sys.argv) > 3):
+            print("Unrecognized argument found: ", sys.argv[3])
+            print("Ensure the correct arguments. Input: python wordlesolver.py word_file target_word [--compute-first-guess] [-c]")
+            sys.exit()
+
+
         if (target in data):
-            solve_wordle(data, target)
+            solve_wordle(data, target, compute_first)
 
         else:
             print(f"The word {target} was not found in the file {filename}. Retry with a correct word from the list.")
